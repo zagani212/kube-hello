@@ -72,5 +72,10 @@ func main() {
 	router.GET("/health", getHealth)
 	router.GET("/info", getInfo)
 
-	router.Run("localhost:8080")
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
+	router.Run("localhost:"+port)
 }
