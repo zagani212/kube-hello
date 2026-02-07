@@ -5,6 +5,7 @@ metadata:
 spec:
   selector:
     app: go
+    version: green
   ports:
     - protocol: TCP
       port: 9376
