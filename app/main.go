@@ -4,6 +4,7 @@ import (
     "net/http"
 	"os"
 	"fmt"
+	"time"
 	"net"
     "github.com/gin-gonic/gin"
 )
@@ -15,11 +16,15 @@ type instance struct {
     Version  string `json:"version"`
 }
 
+type response struct {
+	Status	string `json:"status"` 	
+}
+
 type info struct {
     App     string  `json:"app"`
     Version  string  `json:"version"`
     Environment string  `json:"environment"`
-    StartedAt  float64 `json:"startedAt"`
+    StartedAt  string `json:"startedAt"`
 }
 
 func GetLocalIP() net.IP {
@@ -44,10 +49,28 @@ func getInstance(c *gin.Context){
 	c.IndentedJSON(http.StatusOK, i)
 }
 
+func getHealth(c *gin.Context){
+	var status response
+	status.Status = "ok"
+	c.IndentedJSON(http.StatusOK, status)
+}
 
+func getInfo(c *gin.Context){
+	var i info
+	
+	i.App = os.Getenv("APP_NAME")
+	i.Version = os.Getenv("APP_VERSION")
+	i.Environment = os.Getenv("APP_ENV")
+	i.StartedAt = now.Format("01-02-2006 15:04:05")
+	c.IndentedJSON(http.StatusOK, i)
+}
+var now time.Time
 func main() {
+	now = time.Now()
 	router := gin.Default()
 	router.GET("/", getInstance)
+	router.GET("/health", getHealth)
+	router.GET("/info", getInfo)
 
 	router.Run("localhost:8080")
 }
