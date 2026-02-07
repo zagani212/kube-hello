@@ -77,5 +77,5 @@ func main() {
 		port = "8080"
 	}
 
-	router.Run("localhost:"+port)
+	router.Run(":"+port)
 }
