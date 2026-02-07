@@ -45,11 +45,10 @@ func GetLocalIP() net.IP {
 
 func getInstance(c *gin.Context){
 	var i instance
-	
 	i.IP = fmt.Sprintf("%s",GetLocalIP())
 	i.Message = os.Getenv("MESSAGE")
 	i.Hostname, _ = os.Hostname()
-	i.Version = os.Getenv("APP_VERSION")
+	i.Version = "1.0.0"
 	c.IndentedJSON(http.StatusOK, i)
 }
 
@@ -61,9 +60,8 @@ func getHealth(c *gin.Context){
 
 func getInfo(c *gin.Context){
 	var i info
-	
 	i.App = os.Getenv("APP_NAME")
-	i.Version = os.Getenv("APP_VERSION")
+	i.Version = "1.0.0"
 	i.Environment = os.Getenv("APP_ENV")
 	i.StartedAt = now.Format("01-02-2006 15:04:05")
 	c.IndentedJSON(http.StatusOK, i)
@@ -80,12 +78,7 @@ func main() {
 		c.JSON(http.StatusOK, stats.Report())
 	})
 
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
-	}
-
-	router.Run(":"+port)
+	router.Run(":8080")
 
 	srv := &http.Server{
 		Addr:    ":8080",
