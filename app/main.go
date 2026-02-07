@@ -3,6 +3,9 @@ package main
 import (
     "net/http"
 	"os"
+	"context"
+	"os/signal"
+	"syscall"
 	"fmt"
 	"time"
 	"net"
@@ -83,4 +86,29 @@ func main() {
 	}
 
 	router.Run(":"+port)
+
+	srv := &http.Server{
+		Addr:    ":8080",
+		Handler: router.Handler(),
+	}
+	signalChan := make(chan os.Signal, 1)
+ 	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
+
+
+	 // Wait for SIGTERM or SIGINT
+	<-signalChan
+	fmt.Println("\nSIGTERM received. Waiting 2 seconds to drain requests...")
+
+	// Wait 2 seconds to allow ongoing requests to complete
+	time.Sleep(2 * time.Second)
+
+	// Gracefully shut down the server
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := srv.Shutdown(ctx); err != nil {
+		fmt.Printf("Error during shutdown: %s\n", err)
+	}
+
+	fmt.Println("Server stopped gracefully.")
+
 }
