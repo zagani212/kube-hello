@@ -4,7 +4,7 @@ metadata:
   name: kube-hello
 data:
   MESSAGE: "Hello, from Kubernetes !"
-  APP_VERSION: "v1.0"
+  APP_VERSION: "v2.0"
   APP_NAME: "kube-hello"
   APP_ENV: "prod"
   PORT: "8080"

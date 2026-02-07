@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: go
-        image: abdelhak245/kube-hello:v1.1
+        image: abdelhak245/kube-hello:v2.0
         ports:
         - containerPort: 8080
         envFrom: 
