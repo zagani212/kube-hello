@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 	"net"
+	"github.com/semihalev/gin-stats"
     "github.com/gin-gonic/gin"
 )
 
@@ -68,9 +69,13 @@ var now time.Time
 func main() {
 	now = time.Now()
 	router := gin.Default()
+	router.Use(stats.RequestStats())
 	router.GET("/", getInstance)
 	router.GET("/health", getHealth)
 	router.GET("/info", getInfo)
+	router.GET("/metrics", func(c *gin.Context) {
+		c.JSON(http.StatusOK, stats.Report())
+	})
 
 	port := os.Getenv("PORT")
 	if port == "" {
