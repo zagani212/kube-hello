@@ -7,6 +7,7 @@ import (
 	"os/signal"
 	"syscall"
 	"fmt"
+	"strconv"
 	"time"
 	"net"
 	"github.com/semihalev/gin-stats"
@@ -22,6 +23,12 @@ type instance struct {
 
 type response struct {
 	Status	string `json:"status"` 	
+}
+
+type workStruct struct {
+	Worked	bool `json:"worked"` 	
+	DurationMs	int `json:"surationMs"` 	
+	Hostname	string `json:"hostname"` 	
 }
 
 type info struct {
@@ -66,6 +73,17 @@ func getInfo(c *gin.Context){
 	i.StartedAt = now.Format("01-02-2006 15:04:05")
 	c.IndentedJSON(http.StatusOK, i)
 }
+
+func work(c *gin.Context){
+	var res workStruct
+	res.Worked = true
+	res.DurationMs, _ = strconv.Atoi(c.DefaultQuery("duration", "500"))
+	res.Hostname, _ = os.Hostname()
+	time.Sleep(time.Duration(res.DurationMs) * time.Millisecond)
+	c.IndentedJSON(http.StatusOK, res)
+}
+
+
 var now time.Time
 func main() {
 	now = time.Now()
@@ -74,6 +92,7 @@ func main() {
 	router.GET("/", getInstance)
 	router.GET("/health", getHealth)
 	router.GET("/info", getInfo)
+	router.GET("/work", work)
 	router.GET("/metrics", func(c *gin.Context) {
 		c.JSON(http.StatusOK, stats.Report())
 	})
