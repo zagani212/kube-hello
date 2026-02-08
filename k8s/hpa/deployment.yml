@@ -1,15 +1,15 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: kube-hello
+  name: app
   labels:
     app: go
 spec:
-  replicas: 8
+  replicas: 2
   strategy:
     type: RollingUpdate
     rollingUpdate:
-      maxSurge: 1
+      maxSurge: 3
       maxUnavailable: 1
   selector:
     matchLabels:
@@ -21,19 +21,13 @@ spec:
     spec:
       containers:
       - name: go
-        image: abdelhak245/kube-hello:v2.0
+        image: abdelhak245/kube-hello:v4.0
         resources:
-            limits:
-              memory: 100Mi
-              cpu: 100m
             requests:
               memory: 50Mi
-              cpu: 50m
+              cpu: 10m
         ports:
         - containerPort: 8080
-        envFrom: 
-          - configMapRef:
-              name: kube-hello
         livenessProbe:
           httpGet:
             path: /health
