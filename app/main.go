@@ -10,9 +10,16 @@ import (
 	"strconv"
 	"time"
 	"net"
-	"github.com/semihalev/gin-stats"
     "github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
+
+type metrics struct {
+	http_requests_total *prometheus.CounterVec
+	http_request_duration_seconds_bucket prometheus.Histogram
+}
 
 type instance struct {
     IP     string  `json:"ip"`
@@ -36,6 +43,25 @@ type info struct {
     Version  string  `json:"version"`
     Environment string  `json:"environment"`
     StartedAt  string `json:"startedAt"`
+}
+
+func newMetrics(reg prometheus.Registerer) *metrics {
+	m := &metrics{
+		http_requests_total: promauto.With(reg).NewCounterVec(
+			prometheus.CounterOpts{
+				Name: "http_requests_total",
+				Help: "No of request handled the server",
+			},
+			[]string{"method", "path"},
+		),
+		http_request_duration_seconds_bucket: promauto.With(reg).NewHistogram(
+			prometheus.HistogramOpts{
+				Name: "http_request_duration_seconds_bucket",
+				Help: "The duration of requests in seconds",
+				Buckets: prometheus.LinearBuckets(0.1, 0.1, 10),
+			}),
+	}
+	return m
 }
 
 func GetLocalIP() net.IP {
@@ -83,19 +109,30 @@ func work(c *gin.Context){
 	c.IndentedJSON(http.StatusOK, res)
 }
 
+func durationMiddleware(m *metrics) gin.HandlerFunc {
+	return func (c *gin.Context) {
+		start := time.Now()
+		c.Next()
+		duration := time.Since(start).Seconds()
+		path := c.FullPath()
+		method := c.Request.Method
+		m.http_request_duration_seconds_bucket.Observe(duration)
+		m.http_requests_total.WithLabelValues(method, path).Inc()
+	}
+}
 
 var now time.Time
 func main() {
+	reg := prometheus.NewRegistry()
+	m := newMetrics(reg)
 	now = time.Now()
 	router := gin.Default()
-	router.Use(stats.RequestStats())
+	router.Use(durationMiddleware(m))
 	router.GET("/", getInstance)
 	router.GET("/health", getHealth)
 	router.GET("/info", getInfo)
 	router.GET("/work", work)
-	router.GET("/metrics", func(c *gin.Context) {
-		c.JSON(http.StatusOK, stats.Report())
-	})
+	router.GET("/metrics", gin.WrapH(promhttp.HandlerFor(reg, promhttp.HandlerOpts{})))
 
 	router.Run(":8080")
 
